@@ -1,0 +1,7 @@
+interface:
+  display_name: "Chat Requirement Daily Intake"
+  short_description: "Extract, deduplicate, and report requirements from configurable chat exports."
+  default_prompt: "Use $chat-requirement-daily-intake to validate config.yaml, process the configured chat data scope, generate the daily requirement report, and create only verified new items allowed by the write policy."
+
+policy:
+  allow_implicit_invocation: true

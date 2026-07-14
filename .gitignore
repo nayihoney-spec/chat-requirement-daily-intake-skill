@@ -1,0 +1,27 @@
+# User-specific configuration
+config.yaml
+*.local.yaml
+.env
+.env.*
+
+# Private data and runtime state
+private-data/
+daily-reports/
+state/
+logs/
+exports/
+chat-data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Authentication and browser profiles
+browser-profile/
+cookies*
+tokens*
+credentials*
+secrets*
+
+# System files
+.DS_Store
+Thumbs.db

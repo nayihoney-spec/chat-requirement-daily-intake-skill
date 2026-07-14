@@ -1,0 +1,120 @@
+# Copy this file to config.yaml and replace the example values.
+# Do not store passwords, cookies, session values, access tokens, or refresh tokens here.
+
+skill:
+  locale: "zh-CN"
+  timezone: "Asia/Shanghai"
+
+# Required: local or mounted path containing exported chat data.
+data_source_path: "C:\\Users\\Administrator\\Documents\\xwechat_files"
+
+source:
+  # Adjust according to the actual export format.
+  allowed_extensions:
+    - ".txt"
+    - ".json"
+    - ".html"
+    - ".csv"
+  recursive: true
+
+group_filter:
+  # Example: process groups whose title contains "XXXXXX".
+  title_includes:
+    - "XXXXXX"
+  # any = at least one phrase; all = every phrase.
+  match_mode: "any"
+  title_excludes:
+    - "测试群"
+    - "临时群"
+
+message_filter:
+  content_includes: []
+  content_excludes: []
+  sender_includes: []
+  sender_excludes: []
+
+time_range:
+  # First run only.
+  initial_lookback_hours: 24
+  # Later runs begin from the last successful execution.
+  incremental_from_last_success: true
+  # Re-read a small overlap to catch late or edited messages.
+  overlap_minutes: 10
+
+requirement_categories:
+  - id: "new_feature"
+    label: "New Feature"
+    description: "A new capability, workflow, report, integration, rule, or data object."
+  - id: "improvement"
+    label: "Improvement"
+    description: "An enhancement to an existing behavior, process, output, usability, or performance."
+  - id: "bug_debug"
+    label: "Bug / Debug"
+    description: "Incorrect, unstable, failed, or reproducible existing behavior."
+
+priority_model:
+  enabled: true
+  values:
+    - "critical"
+    - "high"
+    - "medium"
+    - "low"
+
+history_sources:
+  daily_report_paths:
+    - "./private-data/daily-reports"
+  local_index_path: "./private-data/state/requirement-index.json"
+  # Optional additional exported issue list.
+  exported_issue_paths: []
+
+destination:
+  enabled: true
+  type: "web_issue_tracker"
+  project_url: "REPLACE_WITH_YOUR_PROJECT_URL"
+  project_name: "REPLACE_WITH_YOUR_PROJECT_NAME"
+  access_method: "browser_or_connector"
+  reuse_authorized_session: true
+
+  # Replace every destination field name with the actual field used by your system.
+  field_mapping:
+    title: "Title"
+    description: "Description"
+    category: "Type"
+    priority: "Priority"
+    source_group: "Source Group"
+    source_time: "Source Time"
+    source_context: "Source Context"
+    acceptance_criteria: "Acceptance Criteria"
+    existing_item_relation: "Related Item"
+
+duplicate_check:
+  compare_title: true
+  compare_business_scenario: true
+  compare_current_and_expected_behavior: true
+  compare_acceptance_criteria: true
+  exact_duplicate_threshold: 0.95
+  highly_similar_threshold: 0.80
+  uncertain_below_threshold_requires_review: true
+
+write_policy:
+  # report_only | new_only
+  mode: "new_only"
+  first_run_write_enabled: false
+  create_verified_new_only: true
+  update_existing_items: false
+  require_complete_field_mapping: true
+  stop_on_ambiguous_result: true
+
+output:
+  daily_report_directory: "./private-data/daily-reports"
+  state_directory: "./private-data/state"
+  report_format:
+    - "markdown"
+  include_minimum_source_context: true
+  redact_sensitive_values: true
+
+authentication:
+  interactive_first_login: true
+  reuse_existing_authorization: true
+  never_store_secrets_in_repository: true
+  reauthorize_only_when_required: true
