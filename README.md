@@ -1,11 +1,29 @@
-
 # Chat Requirement Daily Intake Skill
 
-一个可公开分享的通用 Codex Skill，用于从群聊导出数据中识别需求、生成日报、检查重复项，并将确认属于全新的需求写入指定的问题或项目管理系统。
+一個可公開分享的通用 Codex Skill，用於從群組聊天匯出資料中識別需求、產生日報、檢查重複項，並將確認屬於全新的需求寫入指定的問題或專案管理系統。
 
-本仓库不绑定特定企业、产品、群组名称、聊天工具或项目平台。所有范围均由使用者在 `config.yaml` 中自行填写。
+本倉庫不綁定特定企業、產品、群組名稱、聊天工具或專案平台。所有範圍均由使用者在 `config.yaml` 中自行填寫。
 
-## 仓库结构
+> [!WARNING]
+> ## Beta 使用限制：請在安裝前閱讀
+>
+> 本倉庫目前屬於 **Instruction-first Beta Skill**。設定格式、需求分類、重複判斷規則與模擬資料乾跑已驗證，但在完成使用者真實資料來源與目標系統的端對端測試前，不應視為即裝即用的生產版本。
+>
+> 1. **資料來源解析器不是萬能的**
+> 目前範例以已匯出的 `.txt`、`.json`、`.html`、`.csv` 等可讀檔案為主要輸入。若資料來源路徑內是聊天應用程式的加密資料庫、快取、媒體檔案或專有內部格式，本 Skill 不保證能夠直接解析。使用者應先確認實際匯出格式，並在必要時補充對應的欄位結構或解析器。
+>
+> 2. **目標專案系統仍需要可用的連線方式**
+> 本 Skill 不內置適用於所有項目平台的通用寫入連接器。實際查詢、重複比對和新增事項，需要使用者俱備已授權的 Connector、官方 API、CLI 登錄狀態或可持續使用的瀏覽器工作階段，並完成項目與欄位對應。若連線或欄位不明確，Skill 必須停止寫入。
+>
+> 3. **Skill 本身不等於每日排程器**
+> `time_range` 只定義每次執行應檢查的時間範圍與增量邏輯，不會自行在每天固定時間啟動。若要定時執行，仍需由 Codex 自動任務、本機 Agent、操作系統調度器或其他受控執行環境負責觸發，並確保該環境持續具備檔案存取、狀態保存及目標系統權限。
+>
+> 4. **相似度門檻需要搭配明確算法驗證**
+> `exact_duplicate_threshold` 與 `highly_similar_threshold` 是策略參數，不代表倉庫已綁定特定 Embedding、字符串相似度或模型算法。使用者應明確指定實際比較方法，並使用真實歷史需求驗證門檻。在結果不確定時，只能列入日報或人工複核，不應自動寫入目標系統。
+>
+> **建議版本定位：** `v0.x Beta`。只有在真實資料解析、歷史需求比對、目標系統查詢與寫入、授權重用及增量狀態保存均完成端對端驗證後，才建議標記為生產可用版本。
+
+## 倉庫結構
 
 ```text
 chat-requirement-daily-intake/
@@ -13,245 +31,245 @@ chat-requirement-daily-intake/
 ├─ README.md
 ├─ config.example.yaml
 ├─ agents/
-│  └─ openai.yaml
+│ └─ openai.yaml
 ├─ assets/
-│  └─ SETUP_QUESTIONNAIRE.md
+│ └─ SETUP_QUESTIONNAIRE.md
 └─ references/
-   ├─ CONFIGURATION_GUIDE.md
-   └─ DAILY_REPORT_TEMPLATE.md
+ ├─ CONFIGURATION_GUIDE.md
+ └─ DAILY_REPORT_TEMPLATE.md
 ```
 
 
-## 上传到 GitHub 分享
+## 上傳到 GitHub 分享
 
-最简单的方式：
+最簡單的方式：
 
-1. 在 GitHub 建立一个新的公开或私有仓库。
-2. 将本资料夹中的全部文件上传到仓库根目录。
-3. 不要上传自己的 `config.yaml`、聊天记录、日报、索引或登录资料。
-4. 在仓库说明中提醒使用者先复制 `config.example.yaml` 为 `config.yaml`。
+1. 在 GitHub 建立一個新的公開或私有倉庫。
+2. 將本資料夾中的全部檔案上傳到倉庫根目錄。
+3. 不要上傳自己的 `config.yaml`、聊天記錄、日報、索引或登入資料。
+4. 在倉庫說明中提醒使用者先複製 `config.example.yaml` 為 `config.yaml`。
 
-## 使用者安装方式
+## 用戶安裝方式
 
-### 方式一：让 Codex 从 GitHub 安装
+### 方式一：讓 Codex 從 GitHub 安裝
 
-在 Codex 中输入：
+在 Codex 中輸入：
 
 ```text
-请使用 $skill-installer，从这个 GitHub 仓库安装 chat-requirement-daily-intake skill：
-<贴上 GitHub 仓库链接>
+請使用 $skill-installer，從這個 GitHub 倉庫安裝 chat-requirement-daily-intake skill：
+<貼上 GitHub 倉庫連結>
 ```
 
-安装后若未立即显示，可重新启动 Codex。
+安裝後若未立即顯示，可重新啟動 Codex。
 
-### 方式二：放入指定仓库使用
+### 方式二：放入指定倉庫使用
 
-把整个 Skill 资料夹复制到目标仓库：
+把整個 Skill 資料夾複製到目標倉庫：
 
 ```text
-<目标仓库>/.agents/skills/chat-requirement-daily-intake/
+<目標倉庫>/.agents/skills/chat-requirement-daily-intake/
 ```
 
-确认最终路径包含：
+確認最終路徑包含：
 
 ```text
-<目标仓库>/.agents/skills/chat-requirement-daily-intake/SKILL.md
+<目標倉庫>/.agents/skills/chat-requirement-daily-intake/SKILL.md
 ```
 
-### 方式三：作为个人通用 Skill
+### 方式三：作為個人通用 Skill
 
-把整个资料夹复制到个人 Skill 目录：
+把整個資料夾複製到個人 Skill 目錄：
 
 ```text
 $HOME/.agents/skills/chat-requirement-daily-intake/
 ```
 
-Windows 的 `$HOME` 通常对应个人用户目录。使用者可直接要求 Codex 协助复制，不需要手动输入命令。
+Windows 的 `$HOME` 通常對應個人使用者目錄。用戶可直接要求 Codex 協助複製，不需要手動輸入指令。
 
 
-## 适用场景
+## 適用場景
 
-- 从本机或已挂载目录读取聊天记录
-- 仅处理标题包含指定字样的群组
-- 识别新功能、改善与缺陷类需求
-- 与历史日报和项目系统现有事项比对
-- 仅新增确认属于全新且非重复的事项
-- 首次人工授权后，尽量复用既有登录会话
-- 遇到权限、解析、映射或重复判断不明确时停止写入
+- 從本機或已掛載目錄讀取聊天記錄
+- 僅處理標題包含指定字樣的群組
+- 識別新功能、改善與缺陷類需求
+- 與歷史日報和專案系統現有事項比對
+- 僅新增確認屬於全新且非重複的事項
+- 首次人工授權後，盡量重複使用既有登入工作階段
+- 遇到權限、解析、映射或重複判斷不明確時停止寫入
 
-## 无代码使用方式
+## 無程式碼使用方式
 
-### 第一步：下载或复制仓库
+### 第一步：下載或複製倉庫
 
-把本仓库下载到自己的电脑，或在 GitHub 中使用此仓库作为模板。
+把本倉庫下載到自己的電腦，或在 GitHub 中使用此倉庫作為模板。
 
-### 第二步：建立个人配置
+### 第二步：建立個人配置
 
-复制：
+複製：
 
 ```text
 config.example.yaml
 ```
 
-并改名为：
+並改名為：
 
 ```text
 config.yaml
 ```
 
-使用一般文字编辑器打开即可，不需要写程序。
+使用一般文字編輯器開啟即可，不需要寫入程式。
 
-### 第三步：填写自己的条件
+### 第三步：填寫自己的條件
 
-至少修改以下内容：
+至少修改以下內容：
 
 ```yaml
 data_source_path: "C:\\Users\\Administrator\\Documents\\xwechat_files"
 
 group_filter:
-  title_includes:
-    - "XXXXXX"
+ title_includes:
+ - "XXXXXX"
 ```
 
-上面的目录与 `XXXXXX` 只是示例。
+上面的目錄與 `XXXXXX` 只是範例。
 
-使用者应自行填写：
+使用者應自行填寫：
 
-- 聊天数据所在目录
-- 群组标题必须包含的字样
-- 是否排除部分群组
-- 首次检查多少小时
-- 后续是否按上次成功时间增量检查
-- 需求类别
-- 历史日报位置
-- 目标项目系统
-- 项目链接或项目识别信息
+- 聊天資料所在目錄
+- 群組標題必須包含的字樣
+- 是否排除部分群組
+- 首次檢查多少小時
+- 後續是否依上次成功時間增量檢查
+- 需求類別
+- 歷史日報位置
+- 目標專案系統
+- 項目連結或項目識別訊息
 - 字段映射
-- 日报输出位置
-- 是否允许首次运行直接写入
+- 日報輸出位置
+- 是否允許首次運行直接寫入
 
-完整说明请见 `references/CONFIGURATION_GUIDE.md`。
+完整說明請見 `references/CONFIGURATION_GUIDE.md`。
 
-### 第四步：在 Codex 中调用
+### 第四步：在 Codex 中調用
 
-在本仓库目录中打开 Codex，然后输入：
+在本倉庫目錄中開啟 Codex，然後輸入：
 
 ```text
-请使用 $chat-requirement-daily-intake，读取 config.yaml，先验证配置与权限，再执行首次初始化。若需要登录或授权，请停下来让我完成。未经确认不要猜测字段，也不要写入不确定的需求。
+請使用 $chat-requirement-daily-intake，讀取 config.yaml，先驗證設定與權限，再執行首次初始化。若需要登入或授權，請停下來讓我完成。未經確認不要猜測字段，也不要寫入不確定的需求。
 ```
 
-### 第五步：首次授权
+### 第五步：首次授權
 
-根据实际环境，使用者可能需要：
+根據實際環境，使用者可能需要：
 
-- 允许 Codex 访问本机数据目录
-- 在固定浏览器用户资料中登录目标项目系统
-- 授权连接器或命令行工具
-- 确认项目与字段映射
+- 允許 Codex 存取本機資料目錄
+- 在固定瀏覽器使用者檔案中登入目標項目系統
+- 授權連接器或命令列工具
+- 確認項目與字段映射
 
-不要把密码、验证码、Cookie 或令牌粘贴到聊天、配置或 GitHub。
+不要把密碼、驗證碼、Cookie 或令牌貼到聊天、設定或 GitHub。
 
-### 第六步：验证首次结果
+### 第六步：驗證首次結果
 
-首次运行应输出：
+首次運行應輸出：
 
-- 扫描群组数量
-- 扫描消息数量
-- 识别需求数量
-- 各类别数量
-- 重复与相似需求数量
-- 确认全新需求数量
-- 实际写入数量
-- 未写入项目
-- 阻塞点
-- 登录会话是否可以在同一执行环境中复用
+- 掃描群組數量
+- 掃描訊息數量
+- 識別需求數量
+- 各類別數量
+- 重複與相似需求數量
+- 確認全新需求數量
+- 實際寫入數量
+- 未寫入項目
+- 阻塞點
+- 登入工作階段是否可以在同一執行環境中重複使用
 
-## 自定义范围示例
+## 自訂範圍範例
 
-### 只处理标题包含一个字样的群组
+### 只處理標題包含一個字樣的群組
 
 ```yaml
 group_filter:
-  title_includes:
-    - "XXXXXX"
-  match_mode: "any"
+ title_includes:
+ - "XXXXXX"
+ match_mode: "any"
 ```
 
-### 标题包含任一字样即可
+### 標題包含任一字樣即可
 
 ```yaml
 group_filter:
-  title_includes:
-    - "Project A"
-    - "Support"
-    - "Product Feedback"
-  match_mode: "any"
+ title_includes:
+ - "Project A"
+ - "Support"
+ - "Product Feedback"
+ match_mode: "any"
 ```
 
-### 必须同时包含所有字样
+### 必須同時包含所有字樣
 
 ```yaml
 group_filter:
-  title_includes:
-    - "Project A"
-    - "External"
-  match_mode: "all"
+ title_includes:
+ - "Project A"
+ - "External"
+ match_mode: "all"
 ```
 
-### 排除测试群组
+### 排除測試群組
 
 ```yaml
 group_filter:
-  title_excludes:
-    - "测试"
-    - "临时"
+ title_excludes:
+ - "測試"
+ - "暫時"
 ```
 
-### 首次检查过去 72 小时
+### 首次檢查過去 72 小時
 
 ```yaml
 time_range:
-  initial_lookback_hours: 72
-  incremental_from_last_success: true
+ initial_lookback_hours: 72
+ incremental_from_last_success: true
 ```
 
-### 只生成日报，不写入项目系统
+### 只產生日報，不寫入專案系統
 
 ```yaml
 write_policy:
-  mode: "report_only"
-  first_run_write_enabled: false
+ mode: "report_only"
+ first_run_write_enabled: false
 ```
 
 ## 重要限制
 
-Skill 是可重复使用的工作说明，不会自动产生本机文件权限、浏览器登录状态或项目系统权限。
+Skill 是可重複使用的工作說明，不會自動產生本機檔案權限、瀏覽器登入狀態或項目系統權限。
 
-要实现定时自动执行，运行环境必须能够：
+要實現定時自動執行，運行環境必須能夠：
 
-1. 持续访问配置的数据目录。
-2. 保存执行状态。
-3. 查询目标项目中的既有事项。
-4. 在组织安全政策允许下复用登录会话或连接器授权。
-5. 在登录失效时通知使用者重新授权。
+1. 持續存取配置的資料目錄。
+2. 保存執行狀態。
+3. 查詢目標項目中的既有事項。
+4. 在組織安全性政策允許下重複使用登入工作階段或連接器授權。
+5. 在登入失效時通知使用者重新授權。
 
-## 隐私与安全
+## 隱私與安全
 
-公开 GitHub 仓库中只能放：
+公開 GitHub 倉庫中只能放：
 
 - `SKILL.md`
-- 示例配置
-- 使用说明
-- 不含真实业务数据的模板
+- 範例配置
+- 使用說明
+- 不含真實業務資料的模板
 
 不要提交：
 
 - `config.yaml`
-- 聊天记录
-- 日报正文
+- 聊天記錄
+- 日報正文
 - 本地索引
-- 浏览器用户资料
-- 密码、验证码、Cookie、令牌
-- 私有项目链接与客户信息
+- 瀏覽器使用者資料
+- 密碼、驗證碼、Cookie、令牌
+- 私人項目連結與客戶訊息
 
-本仓库的 `.gitignore` 已默认排除常见私人配置与运行数据。
+本倉儲的 `.gitignore` 已預設排除常見私人設定與運作資料。
