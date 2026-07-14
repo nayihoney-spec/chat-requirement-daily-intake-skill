@@ -1,0 +1,765 @@
+---
+name: chat-requirement-daily-intake
+description: Extract feature, improvement, and bug requests from configurable group-chat exports, generate a daily requirement report, compare against historical records and an issue tracker, and create only verified new items. Use for recurring requirement-intake workflows based on local or mounted chat data. Do not use for general chat summaries or when the user has not authorized the data source and destination system.
+---
+
+# Chat Requirement Daily Intake
+
+## Purpose
+
+Turn group-chat records into a controlled requirement-intake workflow:
+
+1. Read chat data from a user-defined data source path.
+2. Filter groups by user-defined title keywords and optional content rules.
+3. Identify and classify actionable requirements.
+4. Compare each candidate with historical reports, the local processed-item index, and the destination issue tracker.
+5. Generate a daily report.
+6. Create only verified new and non-duplicate items.
+7. Stop safely when access, authentication, parsing, mapping, or duplicate-checking is uncertain.
+
+This skill is configuration-driven. Never hard-code a user's directory, group title, project URL, credentials, or business terminology into the reusable workflow.
+
+## Required files
+
+Before execution, look for these files in the repository root or current working directory:
+
+- `config.yaml`: the user's active configuration.
+- `config.example.yaml`: the shareable example configuration.
+- `references/DAILY_REPORT_TEMPLATE.md`: required report structure.
+- `references/CONFIGURATION_GUIDE.md`: field definitions and examples.
+
+If `config.yaml` does not exist:
+
+1. Copy `config.example.yaml` to `config.yaml`.
+2. Ask the user to fill the required fields using `assets/SETUP_QUESTIONNAIRE.md`.
+3. Do not guess missing paths, keywords, destination fields, project identifiers, or write permissions.
+4. Do not start destination-system writes until configuration validation succeeds.
+
+## Configuration principles
+
+Treat all values in `config.yaml` as user-owned parameters.
+
+At minimum, require:
+
+- `data_source_path`
+- `group_filter.title_includes`
+- `time_range`
+- `requirement_categories`
+- `history_sources`
+- `destination`
+- `output`
+- `write_policy`
+
+Example data source path:
+
+`C:\Users\Administrator\Documents\xwechat_files`
+
+Example group-title rule:
+
+Process only groups whose title contains `XXXXXX`.
+
+The example is illustrative. Never treat it as a default for another user.
+
+## Preconditions
+
+Before processing:
+
+1. Confirm this task is running in a local or mounted environment that can actually access `data_source_path`.
+2. Confirm the user has authorized access to the data source.
+3. Confirm the destination issue tracker is reachable through an approved connector, API, CLI, or browser session.
+4. Confirm the destination project and field mapping are explicit.
+5. Confirm the current execution can read historical reports or the configured local index.
+6. Confirm secrets are not stored in `config.yaml`, reports, logs, screenshots, or repository files.
+
+If any precondition fails, stop before write operations and produce a blocker report.
+
+## First-run behavior
+
+When `state.last_successful_run_time` is absent:
+
+1. Use the configured initial lookback window.
+2. Default to 24 hours only when `time_range.initial_lookback_hours` explicitly says `24`.
+3. Scan only the groups matching the configured group-title rules.
+4. Build the first processed-message index.
+5. Read existing destination items before creating anything.
+6. Generate a dry-run report unless `write_policy.first_run_write_enabled` is explicitly `true`.
+7. If first-run writes are enabled, create only items classified as verified new and allowed by `write_policy`.
+
+## Incremental behavior
+
+After a successful run:
+
+1. Use `state.last_successful_run_time` as the lower time boundary.
+2. Include a small configured overlap window to protect against late-arriving or edited messages.
+3. Deduplicate source messages using stable identifiers where available.
+4. Otherwise generate a message fingerprint using:
+   - source/group identifier
+   - sender
+   - timestamp
+   - normalized text
+   - attachment name or reference when relevant
+5. Do not process an already completed fingerprint unless the source message changed.
+6. Update state only after the report is saved and all approved destination writes are confirmed.
+
+## Group and message filtering
+
+Apply configuration in this order:
+
+1. Data source path scope.
+2. File or database scope.
+3. Time range.
+4. Group-title include rules.
+5. Group-title exclude rules.
+6. Optional sender filters.
+7. Optional message-content include or exclude rules.
+8. Requirement relevance test.
+
+A title include rule means at least one configured phrase must appear in the group title unless `match_mode` specifies otherwise.
+
+Do not infer additional groups merely because their content looks related.
+
+## Requirement identification
+
+A candidate must describe an observable problem, desired capability, requested change, or reproducible defect.
+
+Classify candidates using the configured categories. The default shareable categories are:
+
+- `new_feature`: a new user capability, workflow, screen, report, integration, rule, or data object.
+- `improvement`: an enhancement to an existing capability, usability, performance, configuration, output, or process.
+- `bug_debug`: an existing behavior that fails, produces an incorrect result, is unstable, or requires diagnosis.
+
+Exclude:
+
+- greetings and acknowledgements
+- scheduling messages without a product or process request
+- pure status updates
+- questions already answered in the same context
+- unverified assumptions
+- general complaints with no identifiable issue or expected result
+- duplicate quotations of an earlier request
+
+When information is incomplete, classify the item as `needs_clarification`; do not create it automatically.
+
+## Required fields for each candidate
+
+Extract:
+
+- requirement title
+- requirement category
+- business or operational background
+- current behavior
+- expected behavior
+- requester or sender
+- source group
+- source timestamp
+- source context
+- affected module or process
+- suggested priority
+- acceptance criteria
+- reproduction steps for defects
+- attachments or evidence references
+- source-message fingerprints
+- duplicate-comparison result
+- corresponding existing item, when applicable
+- confidence and unresolved questions
+
+Do not expose private chat content beyond what is necessary for requirement traceability.
+
+## Priority guidance
+
+Use the user's configured priority model. If none is configured, do not invent destination priority values.
+
+For analysis only, suggest:
+
+- `critical`: safety, security, compliance, data integrity, or widespread service interruption.
+- `high`: core workflow blocked with no reasonable workaround.
+- `medium`: meaningful degradation with a workaround.
+- `low`: convenience, polish, or limited-scope enhancement.
+
+Keep suggested priority separate from the final destination priority unless mapping is configured.
+
+## Duplicate and similarity comparison
+
+Compare every candidate against:
+
+1. Historical daily reports.
+2. The local processed-requirement index.
+3. Existing items in the configured destination project.
+
+Do not rely on title matching alone. Compare:
+
+- business scenario
+- affected object or module
+- trigger condition
+- current behavior
+- expected behavior
+- user role
+- acceptance criteria
+- defect reproduction path
+- requested output or integration
+
+Classify the comparison result as one of:
+
+- `verified_new`
+- `exact_duplicate`
+- `highly_similar`
+- `existing_item_supplement`
+- `needs_clarification`
+
+When an existing item is found, record its identifier and explain the relationship.
+
+Never create `exact_duplicate`, `highly_similar`, `existing_item_supplement`, or `needs_clarification` items unless the user has configured and authorized a separate update workflow.
+
+## Destination write policy
+
+Before creating an item, verify all conditions:
+
+1. The candidate is `verified_new`.
+2. Required destination fields are mapped.
+3. The destination project is confirmed.
+4. The source evidence is traceable.
+5. The item has not already been created in this run.
+6. The item has not appeared in a previous successful run.
+7. The user-authorized write mode permits creation.
+8. No authentication or security prompt is pending.
+
+Use an idempotency key or local creation record whenever the destination supports it.
+
+After creation, save:
+
+- destination item identifier
+- destination URL or reference
+- creation timestamp
+- source fingerprints
+- normalized requirement signature
+
+If creation returns an uncertain result, do not retry blindly. Query the destination first to determine whether the item already exists.
+
+## Authentication and session handling
+
+Authentication must be interactive or managed by an approved credential provider.
+
+Allowed behavior:
+
+- Ask the user to complete the first login or authorization.
+- Reuse an approved persistent browser profile, connector authorization, CLI login, or token store.
+- Re-authenticate only when the session expires, permission is revoked, or the destination requires security verification.
+
+Prohibited behavior:
+
+- Never ask the user to paste passwords, one-time codes, cookies, session values, access tokens, or refresh tokens into chat or configuration files.
+- Never print credentials in logs.
+- Never commit credentials to GitHub.
+- Never copy a browser profile into the repository.
+- Never bypass multi-factor authentication or organizational security controls.
+
+The skill cannot guarantee permanent authorization. It should reuse valid authorization where supported and report when reauthorization is required.
+
+## Failure and stop conditions
+
+Stop destination writes and produce a blocker report when:
+
+- `data_source_path` is inaccessible
+- the chat format cannot be parsed reliably
+- the source database is locked or corrupted
+- group titles cannot be determined
+- the configured time boundary cannot be established
+- history sources are unavailable
+- the destination cannot be queried before duplicate checking
+- destination authentication is required
+- field mapping is missing or ambiguous
+- duplicate status is uncertain
+- item creation fails or returns an ambiguous result
+- the environment cannot safely persist state
+
+Continue read-only analysis only when it does not risk exposing data or producing misleading results.
+
+## Daily report
+
+Use `references/DAILY_REPORT_TEMPLATE.md`.
+
+At minimum report:
+
+- run date and time
+- configured data-source scope
+- time range
+- number of matching groups
+- number of scanned messages
+- total candidates
+- count by configured category
+- exact duplicates
+- highly similar items
+- existing-item supplements
+- needs-clarification items
+- verified new items
+- successfully created destination items
+- items withheld from writing
+- blockers and authorization status
+- state update status
+
+Clearly distinguish:
+
+- observed source facts
+- model interpretation
+- duplicate-comparison evidence
+- destination write results
+
+## State management
+
+Persist state outside the public repository unless it contains no private data.
+
+Recommended state fields:
+
+- `last_successful_run_time`
+- processed message fingerprints
+- normalized requirement signatures
+- destination item identifiers
+- successful and failed write records
+- parser version
+- configuration checksum
+
+Do not advance `last_successful_run_time` when the run fails before the report and required writes complete.
+
+## Completion criteria
+
+A run is complete only when:
+
+1. The configured data scope was accessible.
+2. The time range was applied.
+3. Matching groups and messages were processed.
+4. Candidate requirements were classified.
+5. History and destination comparisons were completed.
+6. The daily report was saved.
+7. Allowed destination writes were verified.
+8. State was safely updated.
+9. Blockers, withheld items, and unresolved questions were reported.
+
+When these criteria are not met, describe the run as partial or blocked. Never claim successful automation without execution evidence.
+
+# User-specific configuration
+config.yaml
+*.local.yaml
+.env
+.env.*
+
+# Private data and runtime state
+private-data/
+daily-reports/
+state/
+logs/
+exports/
+chat-data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Authentication and browser profiles
+browser-profile/
+cookies*
+tokens*
+credentials*
+secrets*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Copy this file to config.yaml and replace the example values.
+# Do not store passwords, cookies, session values, access tokens, or refresh tokens here.
+
+skill:
+  locale: "zh-CN"
+  timezone: "Asia/Shanghai"
+
+# Required: local or mounted path containing exported chat data.
+data_source_path: "C:\\Users\\Administrator\\Documents\\xwechat_files"
+
+source:
+  # Adjust according to the actual export format.
+  allowed_extensions:
+    - ".txt"
+    - ".json"
+    - ".html"
+    - ".csv"
+  recursive: true
+
+group_filter:
+  # Example: process groups whose title contains "XXXXXX".
+  title_includes:
+    - "XXXXXX"
+  # any = at least one phrase; all = every phrase.
+  match_mode: "any"
+  title_excludes:
+    - "测试群"
+    - "临时群"
+
+message_filter:
+  content_includes: []
+  content_excludes: []
+  sender_includes: []
+  sender_excludes: []
+
+time_range:
+  # First run only.
+  initial_lookback_hours: 24
+  # Later runs begin from the last successful execution.
+  incremental_from_last_success: true
+  # Re-read a small overlap to catch late or edited messages.
+  overlap_minutes: 10
+
+requirement_categories:
+  - id: "new_feature"
+    label: "New Feature"
+    description: "A new capability, workflow, report, integration, rule, or data object."
+  - id: "improvement"
+    label: "Improvement"
+    description: "An enhancement to an existing behavior, process, output, usability, or performance."
+  - id: "bug_debug"
+    label: "Bug / Debug"
+    description: "Incorrect, unstable, failed, or reproducible existing behavior."
+
+priority_model:
+  enabled: true
+  values:
+    - "critical"
+    - "high"
+    - "medium"
+    - "low"
+
+history_sources:
+  daily_report_paths:
+    - "./private-data/daily-reports"
+  local_index_path: "./private-data/state/requirement-index.json"
+  # Optional additional exported issue list.
+  exported_issue_paths: []
+
+destination:
+  enabled: true
+  type: "web_issue_tracker"
+  project_url: "REPLACE_WITH_YOUR_PROJECT_URL"
+  project_name: "REPLACE_WITH_YOUR_PROJECT_NAME"
+  access_method: "browser_or_connector"
+  reuse_authorized_session: true
+
+  # Replace every destination field name with the actual field used by your system.
+  field_mapping:
+    title: "Title"
+    description: "Description"
+    category: "Type"
+    priority: "Priority"
+    source_group: "Source Group"
+    source_time: "Source Time"
+    source_context: "Source Context"
+    acceptance_criteria: "Acceptance Criteria"
+    existing_item_relation: "Related Item"
+
+duplicate_check:
+  compare_title: true
+  compare_business_scenario: true
+  compare_current_and_expected_behavior: true
+  compare_acceptance_criteria: true
+  exact_duplicate_threshold: 0.95
+  highly_similar_threshold: 0.80
+  uncertain_below_threshold_requires_review: true
+
+write_policy:
+  # report_only | new_only
+  mode: "new_only"
+  first_run_write_enabled: false
+  create_verified_new_only: true
+  update_existing_items: false
+  require_complete_field_mapping: true
+  stop_on_ambiguous_result: true
+
+output:
+  daily_report_directory: "./private-data/daily-reports"
+  state_directory: "./private-data/state"
+  report_format:
+    - "markdown"
+  include_minimum_source_context: true
+  redact_sensitive_values: true
+
+authentication:
+  interactive_first_login: true
+  reuse_existing_authorization: true
+  never_store_secrets_in_repository: true
+  reauthorize_only_when_required: true
+
+MIT License
+
+Copyright (c) 2026
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+# Chat Requirement Daily Intake Skill
+
+一个可公开分享的通用 Codex Skill，用于从群聊导出数据中识别需求、生成日报、检查重复项，并将确认属于全新的需求写入指定的问题或项目管理系统。
+
+本仓库不绑定特定企业、产品、群组名称、聊天工具或项目平台。所有范围均由使用者在 `config.yaml` 中自行填写。
+
+## 仓库结构
+
+```text
+chat-requirement-daily-intake/
+├─ SKILL.md
+├─ README.md
+├─ config.example.yaml
+├─ agents/
+│  └─ openai.yaml
+├─ assets/
+│  └─ SETUP_QUESTIONNAIRE.md
+└─ references/
+   ├─ CONFIGURATION_GUIDE.md
+   └─ DAILY_REPORT_TEMPLATE.md
+```
+
+
+## 上传到 GitHub 分享
+
+最简单的方式：
+
+1. 在 GitHub 建立一个新的公开或私有仓库。
+2. 将本资料夹中的全部文件上传到仓库根目录。
+3. 不要上传自己的 `config.yaml`、聊天记录、日报、索引或登录资料。
+4. 在仓库说明中提醒使用者先复制 `config.example.yaml` 为 `config.yaml`。
+
+## 使用者安装方式
+
+### 方式一：让 Codex 从 GitHub 安装
+
+在 Codex 中输入：
+
+```text
+请使用 $skill-installer，从这个 GitHub 仓库安装 chat-requirement-daily-intake skill：
+<贴上 GitHub 仓库链接>
+```
+
+安装后若未立即显示，可重新启动 Codex。
+
+### 方式二：放入指定仓库使用
+
+把整个 Skill 资料夹复制到目标仓库：
+
+```text
+<目标仓库>/.agents/skills/chat-requirement-daily-intake/
+```
+
+确认最终路径包含：
+
+```text
+<目标仓库>/.agents/skills/chat-requirement-daily-intake/SKILL.md
+```
+
+### 方式三：作为个人通用 Skill
+
+把整个资料夹复制到个人 Skill 目录：
+
+```text
+$HOME/.agents/skills/chat-requirement-daily-intake/
+```
+
+Windows 的 `$HOME` 通常对应个人用户目录。使用者可直接要求 Codex 协助复制，不需要手动输入命令。
+
+
+## 适用场景
+
+- 从本机或已挂载目录读取聊天记录
+- 仅处理标题包含指定字样的群组
+- 识别新功能、改善与缺陷类需求
+- 与历史日报和项目系统现有事项比对
+- 仅新增确认属于全新且非重复的事项
+- 首次人工授权后，尽量复用既有登录会话
+- 遇到权限、解析、映射或重复判断不明确时停止写入
+
+## 无代码使用方式
+
+### 第一步：下载或复制仓库
+
+把本仓库下载到自己的电脑，或在 GitHub 中使用此仓库作为模板。
+
+### 第二步：建立个人配置
+
+复制：
+
+```text
+config.example.yaml
+```
+
+并改名为：
+
+```text
+config.yaml
+```
+
+使用一般文字编辑器打开即可，不需要写程序。
+
+### 第三步：填写自己的条件
+
+至少修改以下内容：
+
+```yaml
+data_source_path: "C:\\Users\\Administrator\\Documents\\xwechat_files"
+
+group_filter:
+  title_includes:
+    - "XXXXXX"
+```
+
+上面的目录与 `XXXXXX` 只是示例。
+
+使用者应自行填写：
+
+- 聊天数据所在目录
+- 群组标题必须包含的字样
+- 是否排除部分群组
+- 首次检查多少小时
+- 后续是否按上次成功时间增量检查
+- 需求类别
+- 历史日报位置
+- 目标项目系统
+- 项目链接或项目识别信息
+- 字段映射
+- 日报输出位置
+- 是否允许首次运行直接写入
+
+完整说明请见 `references/CONFIGURATION_GUIDE.md`。
+
+### 第四步：在 Codex 中调用
+
+在本仓库目录中打开 Codex，然后输入：
+
+```text
+请使用 $chat-requirement-daily-intake，读取 config.yaml，先验证配置与权限，再执行首次初始化。若需要登录或授权，请停下来让我完成。未经确认不要猜测字段，也不要写入不确定的需求。
+```
+
+### 第五步：首次授权
+
+根据实际环境，使用者可能需要：
+
+- 允许 Codex 访问本机数据目录
+- 在固定浏览器用户资料中登录目标项目系统
+- 授权连接器或命令行工具
+- 确认项目与字段映射
+
+不要把密码、验证码、Cookie 或令牌粘贴到聊天、配置或 GitHub。
+
+### 第六步：验证首次结果
+
+首次运行应输出：
+
+- 扫描群组数量
+- 扫描消息数量
+- 识别需求数量
+- 各类别数量
+- 重复与相似需求数量
+- 确认全新需求数量
+- 实际写入数量
+- 未写入项目
+- 阻塞点
+- 登录会话是否可以在同一执行环境中复用
+
+## 自定义范围示例
+
+### 只处理标题包含一个字样的群组
+
+```yaml
+group_filter:
+  title_includes:
+    - "XXXXXX"
+  match_mode: "any"
+```
+
+### 标题包含任一字样即可
+
+```yaml
+group_filter:
+  title_includes:
+    - "Project A"
+    - "Support"
+    - "Product Feedback"
+  match_mode: "any"
+```
+
+### 必须同时包含所有字样
+
+```yaml
+group_filter:
+  title_includes:
+    - "Project A"
+    - "External"
+  match_mode: "all"
+```
+
+### 排除测试群组
+
+```yaml
+group_filter:
+  title_excludes:
+    - "测试"
+    - "临时"
+```
+
+### 首次检查过去 72 小时
+
+```yaml
+time_range:
+  initial_lookback_hours: 72
+  incremental_from_last_success: true
+```
+
+### 只生成日报，不写入项目系统
+
+```yaml
+write_policy:
+  mode: "report_only"
+  first_run_write_enabled: false
+```
+
+## 重要限制
+
+Skill 是可重复使用的工作说明，不会自动产生本机文件权限、浏览器登录状态或项目系统权限。
+
+要实现定时自动执行，运行环境必须能够：
+
+1. 持续访问配置的数据目录。
+2. 保存执行状态。
+3. 查询目标项目中的既有事项。
+4. 在组织安全政策允许下复用登录会话或连接器授权。
+5. 在登录失效时通知使用者重新授权。
+
+## 隐私与安全
+
+公开 GitHub 仓库中只能放：
+
+- `SKILL.md`
+- 示例配置
+- 使用说明
+- 不含真实业务数据的模板
+
+不要提交：
+
+- `config.yaml`
+- 聊天记录
+- 日报正文
+- 本地索引
+- 浏览器用户资料
+- 密码、验证码、Cookie、令牌
+- 私有项目链接与客户信息
+
+本仓库的 `.gitignore` 已默认排除常见私人配置与运行数据。
