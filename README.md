@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/30018555/README.md)
+
 # Chat Requirement Daily Intake Skill
 
 一个可公开分享的通用 Codex Skill，用于从群聊导出数据中识别需求、生成日报、检查重复项，并将确认属于全新的需求写入指定的问题或项目管理系统。
