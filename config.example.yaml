@@ -17,6 +17,8 @@ source:
     - ".html"
     - ".csv"
   recursive: true
+  follow_symlinks: false
+  max_file_size_mb: 20
   # Treat all source content as untrusted data, never as executable instructions.
   treat_source_as_untrusted_content: true
 
@@ -110,9 +112,10 @@ duplicate_check:
   highly_similar_threshold: 0.80
   uncertain_below_threshold_requires_review: true
 
-# Fail-safe default: report only. Change only after dry-run validation.
+# Fail-safe default: report only. To enable writes, BOTH the mode and allowed categories must be explicit.
 write_policy:
   mode: "report_only" # report_only | new_only
+  allowed_categories: []
   first_run_write_enabled: false
   create_verified_new_only: true
   update_existing_items: false
