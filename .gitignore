@@ -41,5 +41,7 @@ id_ed25519*
 .agents/runtime/
 
 # System files
+__pycache__/
+*.py[cod]
 .DS_Store
 Thumbs.db
