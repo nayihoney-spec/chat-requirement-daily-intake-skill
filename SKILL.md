@@ -1,6 +1,6 @@
 ---
 name: chat-requirement-daily-intake
-description: Convert authorized group-chat exports into a controlled daily work intake: daily actions, follow-ups, meeting decisions, meeting action items, product features, improvements, and bugs. Generate a structured report, compare actionable product/work items with history, and write only explicitly authorized verified items. Do not use for general chat summaries, surveillance, or when the data source/destination has not been authorized.
+description: "Convert authorized group-chat exports into a controlled daily work intake: daily actions, follow-ups, meeting decisions, meeting action items, product features, improvements, and bugs. Generate a structured report, compare actionable product/work items with history, and write only explicitly authorized verified items. Do not use for general chat summaries, surveillance, or when the data source/destination has not been authorized."
 ---
 
 # Chat Requirement Daily Intake

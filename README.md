@@ -158,6 +158,30 @@ Daily Intake Report
 
 完整安全說明見 [`SECURITY.md`](SECURITY.md)。
 
+### 自動安全檢查
+
+Repository 另有一個不依賴第三方 Python 套件的驗證程式：
+
+```text
+python3 scripts/validate_repo.py
+```
+
+GitHub Actions 會在 Pull Request 與 `main` 更新時執行，檢查：
+
+- 公開範例仍維持目的系統關閉、唯讀模式、首次不寫入
+- Skill 不允許隱式觸發，且保留不可信來源資料邊界
+- `config.yaml`、`.env`、聊天匯出、真實日報與 runtime state 未被納入版本控制
+- 目前追蹤的文字檔未出現常見高可信度密鑰格式
+- 舊版快照不再帶有可寫入的範例設定
+
+這是防止設定退化與誤提交的基本閘門，不取代平台端 Secret Scanning、人工 Code Review 或真實環境滲透/權限測試。
+
+### 工具與依賴邊界
+
+本倉庫目前沒有內建聊天解析器、Jira/GitHub API client、瀏覽器自動化程式或排程器，也沒有 runtime 套件依賴；因此不存在可直接「更新到最新版」的應用套件清單。實際執行需由受控環境提供已授權 Connector、官方 API、CLI/瀏覽器 Session 與排程能力。
+
+GitHub Actions 使用固定 commit SHA 的 checkout action，並由 Dependabot 每月檢查 Actions 更新。當未來加入 parser 或目的系統 adapter 時，應同步加入 lockfile、依賴漏洞掃描、單元測試與端到端測試。
+
 ---
 
 ## 使用限制
@@ -189,10 +213,16 @@ Daily Intake Report
 
 ```text
 chat-requirement-daily-intake-skill/
+├─ .github/
+│  ├─ dependabot.yml
+│  └─ workflows/
+│     └─ security-validation.yml
 ├─ SKILL.md
 ├─ README.md
 ├─ SECURITY.md
 ├─ config.example.yaml
+├─ scripts/
+│  └─ validate_repo.py
 ├─ agents/
 │  └─ openai.yaml
 ├─ assets/
@@ -202,7 +232,7 @@ chat-requirement-daily-intake-skill/
    └─ DAILY_REPORT_TEMPLATE.md
 ```
 
-根目錄的 `v1.0` 為早期歷史快照，不應作為目前執行規格；以 `SKILL.md` 為準。
+根目錄的 `v1.0` 僅保留為舊連結的停用提示；其原始內容可由 Git 歷史追溯，但不得作為目前執行規格。以 `SKILL.md` 為準。
 
 ---
 

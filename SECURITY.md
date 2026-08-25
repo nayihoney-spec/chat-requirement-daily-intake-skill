@@ -154,6 +154,20 @@ Do not commit:
 
 Before publishing changes, review both the current tree and recent Git history for accidental attachments or sensitive URLs.
 
+### Automated regression checks
+
+Run the standard-library-only repository validator before publishing:
+
+```text
+python3 scripts/validate_repo.py
+```
+
+The GitHub Actions workflow runs the same check on pull requests and updates to `main`. It verifies fail-safe configuration values, explicit-only invocation, required trust-boundary language, forbidden tracked runtime/private files, common high-confidence secret formats, and the deprecation state of the legacy `v1.0` snapshot.
+
+The workflow has read-only repository permissions, a short timeout, no persisted checkout credentials, and a checkout action pinned to an immutable commit. Dependabot is configured to propose GitHub Actions updates.
+
+These checks are guardrails, not proof of confidentiality or production readiness. They do not inspect private local data, validate connector permissions, replace GitHub Secret Scanning, or prove that an old uploaded attachment is no longer retrievable.
+
 ## Historical exposure note
 
 A file or link removed from the latest branch can still remain visible in Git history. If a historical commit contains sensitive data or points to a sensitive uploaded attachment, assume the data may remain retrievable until the attachment/history is properly remediated.
