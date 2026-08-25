@@ -1,7 +1,9 @@
 interface:
   display_name: "Chat Requirement Daily Intake"
-  short_description: "Extract, deduplicate, and report requirements from configurable chat exports."
-  default_prompt: "Use $chat-requirement-daily-intake to validate config.yaml, process the configured chat data scope, generate the daily requirement report, and create only verified new items allowed by the write policy."
+  short_description: "Extract daily work items, meeting decisions, follow-ups, reminders, and product requirements from authorized chat exports."
+  default_prompt: "Use $chat-requirement-daily-intake only on the configured and authorized data scope. Validate config.yaml and permissions first, generate a read-only daily intake report, separate decisions/reminders/tasks/product requirements, and write to a destination only when the configured write policy explicitly allows it and the item is verified."
 
 policy:
-  allow_implicit_invocation: true
+  # This skill may eventually write to external work-management systems.
+  # Require explicit invocation so normal conversations cannot trigger it accidentally.
+  allow_implicit_invocation: false
