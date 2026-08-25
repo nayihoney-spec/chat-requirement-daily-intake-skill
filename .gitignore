@@ -3,6 +3,7 @@ config.yaml
 *.local.yaml
 .env
 .env.*
+*.env
 
 # Private data and runtime state
 private-data/
@@ -11,16 +12,33 @@ state/
 logs/
 exports/
 chat-data/
+*.log
 *.db
 *.sqlite
 *.sqlite3
 
-# Authentication and browser profiles
+# Authentication, tokens, keys, and browser profiles
 browser-profile/
 cookies*
 tokens*
 credentials*
 secrets*
+auth*.json
+session*.json
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+.npmrc
+.pypirc
+.netrc
+
+# Common local agent/runtime directories
+.codex/
+.agent/
+.agents/runtime/
 
 # System files
 .DS_Store
